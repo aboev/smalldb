@@ -10,7 +10,7 @@ Following example is for MySQL Community 5.6.15
 
 1. Download & untar MySQL source code  
 ```
-  wget http://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-5.6.15.tar.gz
+  wget http://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-5.6.15.tar.gz  
   tar -zxvf mysql-5.6.15.tar.gz
 ```
 2. Clone smalldb into mysql-5.6.15/storage/smalldb directory  
@@ -22,14 +22,14 @@ Following example is for MySQL Community 5.6.15
 ```
   cmake .
 ```
-4. (Optional) Install & run MySQL if you don't have one. Please follow instructions on <a href="http://dev.mysql.com/doc/refman/5.6/en/installing-source-distribution.html"></a> for post-install setup  
+4. (Optional) Install & run MySQL if you don't have one. Please follow instructions on http://dev.mysql.com/doc/refman/5.6/en/installing-source-distribution.html for post-install setup  
 ```
-  make
+  make  
   make install
 ```
 5. Compile smalldb  
 ```
-  cd storage/smalldb
+  cd storage/smalldb  
   make
 ```
 5. Copy smalldb.so file into MySQL plugin directory (You can check plugin directory through: SHOW VARIABLES LIKE "%plugin_dir%";)  
