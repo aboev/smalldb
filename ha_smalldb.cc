@@ -247,7 +247,9 @@ int ha_smalldb::write_row(uchar *buf)
 {
   DBUG_ENTER("ha_smalldb::write_row");
 
-  node* n=pack_row();
+  node* n=new node();
+  n->data = (uchar*) malloc(sizeof(uchar)*table->s->reclength);
+  memcpy(n->data,buf,table->s->reclength);
 
   append_node(n);
   row_count++;
@@ -358,7 +360,6 @@ int ha_smalldb::rnd_end()
   DBUG_RETURN(0);
 }
 
-
 int ha_smalldb::rnd_next(uchar *buf)
 {
   int rc;
@@ -370,7 +371,7 @@ int ha_smalldb::rnd_next(uchar *buf)
     prev=cur;
     cur=next;
     next=cur->next;
-    unpack_row(buf, cur);
+    memcpy(buf,cur->data,table->s->reclength);
     cur_pos++;
     rc=0;
   }else{
@@ -479,164 +480,6 @@ int ha_smalldb::create(const char *name, TABLE *table_arg,
     works.
   */
   DBUG_RETURN(0);
-}
-
-node* ha_smalldb::pack_row()
-{
-  node* n=new node();
-  char attribute_buffer[1024];
-  String attribute(attribute_buffer, sizeof(attribute_buffer),
-                   &my_charset_bin);
-
-  buffer.length(0);
-
-  for (Field **field=table->field ; *field ; field++)
-  {
-    const char *ptr;
-    const char *end_ptr;
-    const bool was_null= (*field)->is_null();
-    
-    (*field)->val_str(&attribute,&attribute);
-    if (was_null)
-      (*field)->set_null();
-
-    if ((*field)->str_needs_quotes())
-    {
-      ptr= attribute.ptr();
-      end_ptr= attribute.length() + ptr;
-      buffer.append('"');
-
-      for (; ptr < end_ptr; ptr++)
-      {
-        if (*ptr == '"')
-        {
-          buffer.append('\\');
-          buffer.append('"');
-        }
-        else if (*ptr == '\r')
-        {
-          buffer.append('\\');
-          buffer.append('r');
-        }
-        else if (*ptr == '\\')
-        {
-          buffer.append('\\');
-          buffer.append('\\');
-        }
-        else if (*ptr == '\n')
-        {
-          buffer.append('\\');
-          buffer.append('n');
-        }
-        else
-          buffer.append(*ptr);
-      }
-      buffer.append('"');
-    }
-    else
-    {
-      buffer.append(attribute);
-    }
-
-    buffer.append(',');
-  }
-
-  buffer.length(buffer.length() - 1);
-  buffer.append('\n');
-
-  int size=buffer.length()+1;
-  n->data=(uchar*)malloc(size*sizeof(uchar));
-  memcpy(n->data,buffer.ptr(),size);
-  n->size=size;
-
-  return n;
-}
-
-void ha_smalldb::unpack_row(uchar* buf, node* n)
-{
-  uchar* curr_offset=n->data;
-  uchar* end_offset=n->data+n->size-2;
-
-  memset(buf, 0, table->s->null_bytes);
-  for (Field **field=table->field ; *field ; field++)
-  {
-    char curr_char;
-
-    buffer.length(0);
-    curr_char= curr_offset[0];
-    if (curr_char == '"')
-    {
-      curr_offset++;
-
-      for ( ; curr_offset < end_offset; curr_offset++)
-      {
-        curr_char= curr_offset[0];
-        if (curr_char == '"' &&
-            (curr_offset == end_offset - 1 ||
-             curr_offset[1] == ','))
-        {
-          curr_offset+= 2;
-          break;
-        }
-        if (curr_char == '\\' && curr_offset != (end_offset - 1))
-        {
-          curr_offset++;
-          curr_char= curr_offset[0];
-          if (curr_char == 'r')
-            buffer.append('\r');
-          else if (curr_char == 'n' )
-            buffer.append('\n');
-          else if (curr_char == '\\' || curr_char == '"')
-            buffer.append(curr_char);
-          else
-          {
-            buffer.append('\\');
-            buffer.append(curr_char);
-          }
-        }
-        else
-        {
-          buffer.append(curr_char);
-        }
-      }
-    }
-    else
-    {
-      for ( ; curr_offset < end_offset; curr_offset++)
-      {
-        curr_char= curr_offset[0];
-        if (curr_char == ',')
-        {
-          curr_offset++;
-          break;
-        }
-        if (curr_char == '\\' && curr_offset != (end_offset - 1))
-        {
-          curr_offset++;
-          curr_char= curr_offset[0];
-          if (curr_char == 'r')
-            buffer.append('\r');
-          else if (curr_char == 'n' )
-            buffer.append('\n');
-          else if (curr_char == '\\' || curr_char == '"')
-            buffer.append(curr_char);
-          else
-          {
-            buffer.append('\\');
-            buffer.append(curr_char);
-          }
-        }
-        else
-        {
-          buffer.append(curr_char);
-        }
-      }
-    }
-
-    (*field)->store(buffer.ptr(), buffer.length(), buffer.charset(), CHECK_FIELD_WARN);
-
-  }
-
 }
 
 void append_node(node* n){

@@ -27,12 +27,10 @@ public:
 
   uchar* data;
   node* next;
-  int size;
 
   node(){
     data=NULL;
     next=NULL;
-    size=0;
   }
 
   ~node(){
@@ -64,9 +62,6 @@ public:
   ~ha_smalldb()
   {
   }
-
-  node* pack_row();
-  void unpack_row(uchar* buf, node* n);
 
   const char *table_type() const { return "SMALLDB"; }
 
