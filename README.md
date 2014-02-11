@@ -14,7 +14,7 @@ Following example is for MySQL Community 5.5.35
   wget http://downloads.mysql.com/archives/get/file/mysql-5.5.35.tar.gz
   tar -zxvf mysql-5.5.35.tar.gz
 ```
-2. Clone smalldb into mysql-5.6.15/storage/smalldb directory
+2. Clone smalldb into mysql-5.5.35/storage/smalldb directory
 
 ```
   cd mysql-5.5.35
